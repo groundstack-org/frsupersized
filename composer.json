@@ -1,0 +1,19 @@
+{
+  "name": "ffrewer/frsupersized",
+  "type": "typo3-cms-extension",
+  "description": "TYPO3 - Supersized",
+  "keywords": [
+    "TYPO3",
+    "extension",
+    "Supersized"
+  ],
+  "require": {
+    "php": ">=7.2.0",
+    "typo3/cms-core": ">=10.4.0,<11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "FFREWER\\Frsupersized\\": "Classes"
+    }
+  }
+}

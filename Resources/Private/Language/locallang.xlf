@@ -60,6 +60,9 @@
 			<trans-unit id="tt_content.pi_flexform.field.settings.general.slides" xml:space="preserve">
 				<source>Image file(s) for full background, slideshow or banner</source>
 			</trans-unit>
+			<trans-unit id="tt_content.pi_flexform.field.settings.general.slidesDescription" xml:space="preserve">
+				<source>Files must be located in /uploads/tx_frsupersized/. Single filenames must be delimited by new lines or comma.</source>
+			</trans-unit>
 			<trans-unit id="tt_content.pi_flexform.field.settings.general.slideCaptions" xml:space="preserve">
 				<source>Slide captions</source>
 			</trans-unit>

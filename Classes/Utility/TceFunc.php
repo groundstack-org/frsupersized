@@ -117,7 +117,7 @@ class TceFunc {
 	}
 	
 	/**
-	 * @return Set settings array from the extension manager
+	 * @return array settings array from the extension manager
 	 */
 	protected function setFrsupersizedConfigurationArray() {
 		$this->frsupersizedConfigurationArray = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['frsupersized']);

@@ -57,9 +57,20 @@
 			slide_links:		<f:if condition="{0:settings.slideshow.slideLinks} != {0:'false'}"><f:then>'{settings.slideshow.slideLinks}'</f:then><f:else>0</f:else></f:if>,			// Individual links for each slide (Options: false, 'num', 'name', 'blank')
 			thumb_links:		{settings.slideshow.thumbLinks},			// Individual thumb links for each slide
 			thumbnail_navigation:	{settings.slideshow.thumbnailNavigation},			// Thumbnail navigation
-			slides:			[
-		<f:for each="{settings.general.slideValues}" as="slide" key="number">						{ image : '/uploads/tx_frsupersized/{slide.image}'<f:if condition="{slide.thumb}">, thumb : '/{slide.thumb}'</f:if><f:if condition="{slide.title}">,  title : '{slide.title}'</f:if><f:if condition="{slide.url}">,  url : '{slide.url}'</f:if> }{slide.comma}
-		</f:for>					],
+		<f:if condition="{f:count(subject: settings.general.images)} > 0">
+			<f:then>slides: [
+				<f:for each="{settings.general.images}" as="slide" key="number" iteration="slideIterator">
+				<f:if condition="{slideIterator.isLast}">
+				<f:then><f:format.raw>{</f:format.raw>image: '{f:uri.image(src: slide.uid, treatIdAsReference: 1)}'<f:format.raw>}</f:format.raw></f:then>
+				<f:else><f:format.raw>{</f:format.raw>image: '{f:uri.image(src: slide.uid, treatIdAsReference: 1)}'<f:format.raw>}</f:format.raw>,</f:else>
+				</f:if>
+			</f:for>],
+			</f:then>
+			<f:else>slides: [
+				<f:for each="{settings.general.slideValues}" as="slide" key="number">{ image : '/uploads/tx_frsupersized/{slide.image}'<f:if condition="{slide.thumb}">, thumb : '/{slide.thumb}'</f:if><f:if condition="{slide.title}">,  title : '{slide.title}'</f:if><f:if condition="{slide.url}">,  url : '{slide.url}'</f:if> }{slide.comma}
+			</f:for>],
+			</f:else>
+		</f:if>
 			// Theme Options
 			progress_bar:		{settings.slideshow.themeShutterProgressBar},			// Timer for each slide
 			mouse_scrub:		{settings.slideshow.themeShutterMouseScrub},			// thumbnail list navigate left or right based on the mouse location
@@ -67,9 +78,20 @@
 			control_bar: {settings.slideshow.controlBar}			// control bar (additional option for frsupersized configuration)
 	</f:then>
 	<f:else>
-			slides:			[
-							<f:if condition="1">{</f:if> image : '/uploads/tx_frsupersized/{settings.general.slideValues.0.image}' <f:if condition="1">}</f:if>
-						]
+		<f:if condition="{f:count(subject: settings.general.images)} > 0">
+			<f:then>slides: [
+			<f:for each="{settings.general.images}" as="slide" key="number" iteration="slideIterator">
+			<f:if condition="{slideIterator.isLast}">
+				<f:then><f:format.raw>{</f:format.raw>image: '{f:uri.image(src: slide.uid, treatIdAsReference: 1)}'<f:format.raw>}</f:format.raw></f:then>
+				<f:else><f:format.raw>{</f:format.raw>image: '{f:uri.image(src: slide.uid, treatIdAsReference: 1)}'<f:format.raw>}</f:format.raw>,</f:else>
+			</f:if>
+			</f:for>]
+			</f:then>
+			<f:else>slides: [
+				<f:format.raw>{</f:format.raw>image : '/uploads/tx_frsupersized/{settings.general.slideValues.0.image}'<f:format.raw>}</f:format.raw>
+			]
+			</f:else>
+		</f:if>
 	</f:else>
 </f:if>
 		});
@@ -124,5 +146,3 @@
 </f:if><f:if condition="{0: {settings.slideshow.thumbLinks}, 1: {settings.slideshow.controlBar}, 2: {settings.slideshow.banner.banner}} == {0: 1, 1: 1, 2: 1}">
 </style>
 </f:if>
-
-
