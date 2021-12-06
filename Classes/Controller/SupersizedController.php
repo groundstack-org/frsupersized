@@ -25,6 +25,7 @@ namespace FFREWER\Frsupersized\Controller;
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
@@ -55,7 +56,7 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 	 */
 	protected function initializeAction() {
 		// resolve relative extension path in $this->settings from 'EXT:'
-		array_walk_recursive($this->settings, array($this, 'resolveRelativeExtPath'));
+		// array_walk_recursive($this->settings, array($this, 'resolveRelativeExtPath'));
 	}
 
 	/**
@@ -67,16 +68,19 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 		// check and rebuild the settings array
 		$this->rebuildSettings();
 		// create a Fluid instance for header data rendering
-		$renderer = $this->getRenderer('Headerdata');
+		// $renderer = $this->getRenderer('Headerdata');
 		// assign the data to it
-		$renderer->assign('settings', $this->settings);
+		// $renderer->assign('settings', $this->settings);
 		// and do the rendering
-		$headerData = $renderer->render();
+		// $headerData = $renderer->render();
 		// add the header data
-		$this->response->addAdditionalHeaderData($headerData);
+		// $this->response->addAdditionalHeaderData($headerData);
 		$supersized = $this->settings;
 		// assign it to the standard fluid template
 		$this->view->assign('supersized', $supersized);
+
+		$data = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Configuration\ConfigurationManager::class);
+		$this->view->assign('data', $data->getContentObject()->data);
 	}
 
 	/**
@@ -118,7 +122,12 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 		// section banner
 		$this->settings['banner']['banner'] = intval($this->settings['banner']['banner']) > 0 ? 1 : 0;
 		// get all slides (the file names)
-		$this->settings['general']['slidesArray'] = explode( ',', trim($this->settings['general']['slides']) );
+		// Allow newlines as delimiter as well
+		$this->settings['general']['slidesArray'] = GeneralUtility::trimExplode(
+			',',
+			str_replace(["\n", "\r"], ',', $this->settings['general']['slides']),
+			true
+		);
 		// check if slideshow or not
 		if ($this->settings['slideshow']['slideshow'] == 1) {
 			$slideCaptions = explode( chr(10), $this->settings['general']['slideCaptions'] );
@@ -140,6 +149,17 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 			// get the values for javascript array 'slides'
 			$this->settings['general']['slideValues'][0] = array('image' => $firstSlide);
 		}
+        //
+        // Get FAL files
+        if(isset($this->settings['general']['images']) && (int)$this->settings['general']['images'] > 0) {
+            $content = $this->configurationManager->getContentObject()->data;
+            $fileRepository = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\FileRepository::class);
+            $this->settings['general']['images'] = $fileRepository->findByRelation(
+                'tt_content',
+                'supersized_image',
+                $content['uid']
+            );
+        }
 	}
 
 	/**
@@ -150,8 +170,7 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 	protected function getThumbnails() {
 		// instanciate the thumbCreator
 		$thumbCreator = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Imaging\\GifBuilder');
-		$thumbCreator->init();
-		$thumbCreator->absPrefix = PATH_site;
+		$thumbCreator->absPrefix = Environment::getPublicPath() . '/';
 		// width 150 & height 108 are the default values of the Supersized plugin
 		$widthParam = strval( intval($this->settings['slideshow']['thumbWidth']) > 0 ? intval($this->settings['slideshow']['thumbWidth']) : 150 ) . ( intval($this->settings['slideshow']['thumbWidthCrop']) > 0 ? 'c' : '');
 		$heightParam = strval( intval($this->settings['slideshow']['thumbHeight']) > 0 ? intval($this->settings['slideshow']['thumbHeight']) : 108 ) . ( intval($this->settings['slideshow']['thumbHeightCrop']) > 0 ? 'c' : '');
@@ -160,7 +179,7 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 			// create cropped thumbnail - it will only be created if it doesn't exists
 			$tempFileInfo[$key] = $thumbCreator->imageMagickConvert('uploads/tx_frsupersized/' . $value, '', $widthParam, $heightParam, $imParams, '', $options, TRUE);
 			// strip PATH_site from file path - get relative url
-			$tempFileInfo[$key]['thumb'] = str_replace(PATH_site, "", $tempFileInfo[$key][3]);
+			$tempFileInfo[$key]['thumb'] = str_replace(Environment::getPublicPath() . '/', "", $tempFileInfo[$key][3]);
 			// get the values for javascript array 'slides'
 			$this->settings['general']['slideValues'][$key] = array(
 				'thumb' => $tempFileInfo[$key]['thumb'],
@@ -175,7 +194,7 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 	 */
 	protected function getImageDimensions() {
 		foreach ($this->settings['general']['slidesArray'] as $key => $value) {
-			$imagePath = PATH_site . 'uploads/tx_frsupersized/' . trim($value);
+			$imagePath = Environment::getPublicPath() . '/uploads/tx_frsupersized/' . trim($value);
 			$imageInfo = getimagesize($imagePath);
 			// get the values for javascript array 'slides'
 			$this->settings['general']['slideValues'][$key]['width'] = $imageInfo[0];
@@ -254,12 +273,12 @@ class SupersizedController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContr
 	/**
 	 * Help function for function array_walk_recursive to resolve relative extension path in $item from 'EXT:'
 	 *
-	 * @param string $item The value of a key/value pair from an array. $item is referenced: The changed value will be write back to the array. 
+	 * @param string $item The value of a key/value pair from an array. $item is referenced: The changed value will be write back to the array.
 	 * @param void $key The key of a key/value pair from an array
 	 */
 	public function resolveRelativeExtPath(&$item, $key) {
 		if (substr($item,0,4) == 'EXT:') {
-			$item = '/' . str_replace(PATH_site, '', GeneralUtility::getFileAbsFileName($item));;
+			$item = '/' . str_replace(Environment::getPublicPath() . '/', '', GeneralUtility::getFileAbsFileName($item));;
 		}
 	}
 
